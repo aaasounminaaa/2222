@@ -1,0 +1,24 @@
+﻿version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Nothing to do in the pre_build phase...
+      # - curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+      # - sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+      # - rm -rf argocd-linux-amd64
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - REGION="ap-northeast-2"
+      - aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
+      - random_test4=$(cat /dev/urandom | tr -dc 'a-z' | fold -w 8 | sed 1q)
+      # - argocd login 54.180.163.255:443
+      # - argocd app sync test
+  build:
+    commands:
+      - echo Build started on `date`
+      # - random_num="$(($RANDOM% 10))"
+      - docker build -t $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/gwangju-repo:$random_test4 .
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - docker push $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/gwangju-repo:$random_test4

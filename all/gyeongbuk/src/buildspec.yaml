@@ -1,0 +1,28 @@
+﻿version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+      - REGION="ap-northeast-2"
+      - ECR_NAME="gyeongbuk-ecr"
+      - aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
+      - ECR_URI=$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$ECR_NAME
+      - IMAGE_TAG=$(date -d "+9 hours" "+%Y-%m-%d.%H.%M.%S")
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - docker build -t $ECR_URI:$IMAGE_TAG .
+      - docker push $ECR_URI:$IMAGE_TAG
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - sed -i "s|ACCOUNT_ID|$ACCOUNT_ID|g" taskdef.json
+      - printf '{"ImageURI":"%s"}' $ECR_URI:$IMAGE_TAG > imageDetail.json
+artifacts:
+  files:
+    - imageDetail.json
+    - taskdef.json
+    - appspec.yml
