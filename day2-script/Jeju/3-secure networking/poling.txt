@@ -1,0 +1,3 @@
+aws sqs send-message \
+  --queue-url https://sqs.ap-northeast-2.amazonaws.com/<account-id>/<queue-name> \
+  --message-body "Hello from EC2!"
